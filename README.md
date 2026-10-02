@@ -83,8 +83,8 @@ Steam → GeoGuessr → ПКМ → **Свойства** → **Параметры
 ### 2. Запусти ассистента
 
 ```bash
-git clone https://github.com/therample/geoguessr-assistant.git
-cd geoguessr-assistant
+git clone https://github.com/therample/GG-Assistant.git
+cd GG-Assistant
 python main.py
 ```
 
@@ -138,7 +138,7 @@ cartoApiKey: 'ВАШ_КЛЮЧ_CARTO',
 ## 📁 Структура проекта
 
 ```
-geoguessr-assistant/
+GG-Assistant/
 ├── main.py              # CDP-хаб, снифферы, логика инжекта, Flask API
 └── static/
     ├── index.html       # Разметка UI
