@@ -83,7 +83,7 @@ Steam → GeoGuessr → ПКМ → **Свойства** → **Параметры
 ### 2. Запусти ассистента
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/geoguessr-assistant.git
+git clone https://github.com/therample/geoguessr-assistant.git
 cd geoguessr-assistant
 python main.py
 ```
