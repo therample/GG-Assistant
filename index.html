@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoGuessr Assistant</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ═══════════════ TOP BAR ═══════════════ -->
+    <header id="topbar">
+        <div class="topbar-left">
+            <div class="logo">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="url(#logoGrad)"/>
+                    <defs>
+                        <linearGradient id="logoGrad" x1="0" y1="0" x2="24" y2="24">
+                            <stop stop-color="#6c5ce7"/>
+                            <stop offset="1" stop-color="#00d4ff"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span class="logo-text">GG<span class="accent">Assistant</span></span>
+            </div>
+            <div class="connection-status" id="connStatus">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Connecting...</span>
+            </div>
+        </div>
+
+        <div class="topbar-center">
+            <div class="round-indicator" id="roundIndicator">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11 17h2v-6h-2v6zm1-15C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                </svg>
+                <span id="roundText">Round —</span>
+            </div>
+        </div>
+
+        <div class="topbar-right">
+            <button class="btn-icon" id="btnCopyCoords" title="Copy coordinates (C)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/>
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                </svg>
+            </button>
+            <button class="btn-icon" id="btnSettings" title="Settings">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v4m0 14v4M4.22 4.22l2.83 2.83m9.9 9.9l2.83 2.83M1 12h4m14 0h4M4.22 19.78l2.83-2.83m9.9-9.9l2.83-2.83"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- ═══════════════ MAIN LAYOUT ═══════════════ -->
+    <main id="mainLayout">
+        <!-- LEFT SIDEBAR -->
+        <aside id="sidebar">
+            <!-- Location Card -->
+            <div class="card location-card" id="locationCard">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                        </svg>
+                        Location
+                    </h2>
+                    <div class="card-header-actions">
+                        <div class="pulse-indicator" id="locationPulse"></div>
+                        <button class="btn-icon btn-mini" id="btnRefreshGeo" title="Re-detect place (G)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"/>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                            </svg>
+                        </button>
+                        <button class="btn-icon btn-mini" id="btnCopyAddress" title="Copy full address (A)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="location-content">
+                    <div class="coords-display">
+                        <div class="coord-group">
+                            <span class="coord-label">LAT</span>
+                            <span class="coord-value" id="latValue">--.------</span>
+                        </div>
+                        <div class="coord-group">
+                            <span class="coord-label">LNG</span>
+                            <span class="coord-value" id="lngValue">--.------</span>
+                        </div>
+                    </div>
+
+                    <div class="country-info" id="countryInfo">
+                        <div class="country-flag" id="countryFlag">
+                            <div class="flag-placeholder">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1v14z"/>
+                                    <line x1="4" y1="22" x2="4" y2="15"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="country-details">
+                            <span class="country-name" id="countryName">Waiting…</span>
+                            <span class="country-code" id="countryCode">—</span>
+                        </div>
+                    </div>
+
+                    <div class="place-details" id="placeDetails">
+                        <div class="place-empty">Place details will appear here</div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="btnShowOnMap">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                            </svg>
+                            Show on Map
+                        </button>
+                        <div class="btn-row">
+                            <button class="btn btn-secondary" id="btnOpenPanorama">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" y1="14" x2="21" y2="3"/>
+                                </svg>
+                                Panorama
+                            </button>
+                            <button class="btn btn-secondary" id="btnOpenStreetView">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                Street View
+                            </button>
+                                                <!-- 5K MARKER IN GAME -->
+                            <button class="btn btn-5k" id="btnMark5K"
+                                title="Поставить 5K-маркер на карте в ИГРЕ (клавиша 5). Shift+клик — убрать.">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z"/>
+                                <path d="M17 5h3a1 1 0 0 1 1 1c0 2.5-2 4-4 4M7 5H4a1 1 0 0 0-1 1c0 2.5 2 4 4 4"/>
+                            </svg>
+                            5K in Game
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Round History -->
+            <div class="card history-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        History
+                    </h2>
+                    <span class="history-count" id="historyCount">0</span>
+                </div>
+                <div class="history-list" id="historyList">
+                    <div class="history-empty">No rounds yet — start a game</div>
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                        </svg>
+                        Details
+                    </h2>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Source</span>
+                        <span class="info-value" id="sourceValue">—</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Pano ID</span>
+                        <span class="info-value mono" id="panoIdValue">—</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Last Update</span>
+                        <span class="info-value" id="lastUpdateValue">—</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAP AREA -->
+        <section id="mapContainer">
+            <div id="map"></div>
+            <div class="map-overlay" id="mapOverlay">
+                <div class="overlay-content">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="overlay-icon">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    <p>Waiting for location data...</p>
+                    <span class="overlay-sub">Start a game in GeoGuessr</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ═══════════════ SETTINGS MODAL ═══════════════ -->
+    <div class="modal-backdrop" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M12 1v4m0 14v4M4.22 4.22l2.83 2.83m9.9 9.9l2.83 2.83M1 12h4m14 0h4M4.22 19.78l2.83-2.83m9.9-9.9l2.83-2.83"/>
+                    </svg>
+                    Settings
+                </h2>
+                <button class="btn-icon" id="btnCloseSettings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-group">
+                    <h3>Map</h3>
+                    <div class="setting-item">
+                        <label>Tile Provider</label>
+                        <select id="setMapProvider">
+                            <option value="dark">Dark Matter</option>
+                            <option value="osm">OpenStreetMap</option>
+                            <option value="satellite">Satellite (Esri)</option>
+                            <option value="topo">Topographic</option>
+                            <option value="voyager">CartoDB Voyager</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="setAutoZoom" checked>
+                            Auto-zoom to location
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h3>Behavior</h3>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="setAutoShow" checked>
+                            Auto-show when new round detected
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="setReverseGeocode" checked>
+                            Auto-detect country &amp; city
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h3>Connection</h3>
+                    <div class="setting-item">
+                        <label>Poll Interval (ms)</label>
+                        <input type="number" id="setPollInterval" value="500" min="100" max="5000" step="100">
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h3>Shortcuts</h3>
+                    <div class="shortcuts-grid">
+                        <div class="shortcut"><kbd>S</kbd><span>Show on map</span></div>
+                        <div class="shortcut"><kbd>C</kbd><span>Copy coordinates</span></div>
+                        <div class="shortcut"><kbd>A</kbd><span>Copy address</span></div>
+                        <div class="shortcut"><kbd>G</kbd><span>Re-detect place</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btnResetSettings">Reset</button>
+                <button class="btn btn-primary" id="btnSaveSettings">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TOAST ═══════════════ -->
+    <div id="toastContainer"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
